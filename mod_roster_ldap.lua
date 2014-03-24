@@ -1,16 +1,17 @@
 local lualdap = require 'lualdap';
 local timer = require 'util.timer';
 local options = module:get_option('ldap_roster') or {}
-local ldap_server = options.ldap_server or 'ldap.hackerspace.pl'
-local ldap_tls = options.ldap_tls or true;
-local ldap_filter = options.ldap_filter or 'memberOf=cn=xmpp-users,ou=Group,dc=hackerspace,dc=pl';
-local ldap_base = options.ldap_base or 'ou=People,dc=hackerspace,dc=pl';
-local ldap_binddn = options.ldap_binddn or '';
-local ldap_bindpass = options.ldap_bindpass or '';
+local ldap_server = options.ldap_server or 'localhost'
+local ldap_tls = options.ldap_tls or false;
+local ldap_base = options.ldap_base or 'ou=people,dc=localhost,dc=localdomain';
+local ldap_group_filter = options.ldap_group_filter or 'cn=xmpp-users';
+local ldap_group_base = options.ldap_group_base or 'ou=group,dc=localhost,dc=localdomain';
+local ldap_binddn = options.ldap_binddn or 'cn=admin,dc=localhost,dc=localdomain';
+local ldap_bindpass = options.ldap_bindpass or 'password';
 local ldap_scope = options.ldap_scope or 'onelevel';
 local ldap_uidattr = options.ldap_uidattr or 'uid';
 local ldap_nameattr = options.ldap_nameattr or 'cn';
-local group_name = options.group_name or 'Hackerspace';
+local group_name = options.group_name or 'Members';
 local refresh_time = options.refresh_time or 60;
 
 local lc = assert(lualdap.open_simple(ldap_server, ldap_binddn, ldap_bindpass, ldap_tls),
@@ -86,17 +87,36 @@ local function push_all_rosters()
 end
 
 local function update_roster()
-  local iter, err = lc:search { 
-    base = ldap_base;
+  local iter, err = lc:search {
+    base = ldap_group_base;
     scope = ldap_scope;
-    filter = ldap_filter;
+    filter = ldap_group_filter;
+    attrs = { 'member' };
   }
   if not iter then
     print('error', err);
   end
   for dn, attrs in iter do
-    local entry = ldap_to_entry(dn, attrs);
-    ldap_roster[entry.jid] = entry
+    module:log('debug', 'group: '..tostring(dn))
+    for k, member_dn in pairs(attrs.member) do
+      module:log('debug', ' member: '..tostring(member_dn))
+      local user_filter = string.match(member_dn, "([^,]*)")
+      local iter_members = lc:search {
+        base = ldap_base;
+        scope = ldap_scope;
+        filter = user_filter;
+        attrs = { ldap_nameattr; ldap_uidattr };
+      }
+
+      if not iter then
+        print('error', err);
+      end
+
+      for user_dn, user_attrs in iter_members do
+        local entry = ldap_to_entry(user_dn, user_attrs);
+        ldap_roster[entry.jid] = entry;
+      end
+    end
   end
   module:log('info', 'updated LDAP roster')
   --push_all_rosters()
