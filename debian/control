@@ -1,0 +1,15 @@
+Source: prosody-module-roster-ldap
+Section: admin
+Priority: optional
+Maintainer: Mayflower Administrators <admin-intern@mayflower.de>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Homepage: https://github.com/Mayflower/mod_roster_ldap
+Vcs-Git: git://github.com/Mayflower/mod_roster_ldap.git
+Vcs-Browser: https://github.com/Mayflower/mod_roster_ldap
+
+Package: prosody-module-roster-ldap
+Architecture: all
+Depends: prosody
+Description: Shared LDAP Roster Module for Prosody
+

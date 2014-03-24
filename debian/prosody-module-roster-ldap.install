@@ -1,0 +1,1 @@
+mod_roster_ldap.lua usr/lib/prosody/modules
