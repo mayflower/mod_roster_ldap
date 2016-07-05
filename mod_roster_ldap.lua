@@ -42,7 +42,10 @@ local function ldap_to_entry(dn, attrs)
   return { jid = attrs[params.roster.usernamefield]..'@'..host, name=name };
 end
 
-local function inject_roster_contacts(username, host, roster)
+local function inject_roster_contacts(event)
+  local username = event.username;
+  local host = event.host;
+  local roster = event.roster;
   for jid, entry in pairs(ldap_roster) do
     if not (jid == username..'@'..host or roster[jid]) then
       module:log('debug', 'injecting '..jid..' as '..entry.name)
