@@ -1,5 +1,6 @@
 local ldap  = module:require 'ldap';
 local timer = require 'util.timer';
+local datamanager = require 'util.datamanager';
 
 if not ldap then
     return;
